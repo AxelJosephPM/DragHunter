@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+
+# XFOIL artefacts
+xfoil_script.inp
+polar_tmp.txt
+polar_tmp
+cp_output.txt
+polar_test.txt
+
+# Executables
+*.exe
+
+# Generated data
+generated_profiles/
+results/
+
+# Misc
+.DS_Store
