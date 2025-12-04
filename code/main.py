@@ -1,48 +1,55 @@
 import os
-import numpy as np
-from xfoil_runner import run_xfoil
+from Airfoil_Generator import Airfoil
 
-def main():
-    # === CONFIGURACIÓN ===
-    perfiles_dir = "C:\\Users\\lo1mo\\Documents\\3ro\\Aerodinamica\\Trabajo\\code\\generated_profiles"
 
-    Re = 5e6
-    Mach = 0.45
-    alphas = [0]  # α que quieres analizar
+def generate_airfoils(t_list, c_list, normalize=True, output_folder="generated_profiles"):
+    """
+    Genera múltiples perfiles NACA 00xx, los guarda con su .dat
+    y devuelve un DICCIONARIO con claves del estilo:
+    "NACA0012_c4.5m" : AirfoilObject
+    """
 
-    files = [f for f in os.listdir(perfiles_dir) if f.endswith(".dat")]
+    os.makedirs(output_folder, exist_ok=True)
+    airfoil_dict = {}
 
-    print("\n=== ANALIZANDO PERFILES (XFOIL DIRECTO) ===\n")
+    for t_rel in t_list:
+        for c in c_list:
 
-    summary = []
+            # Crear objeto Airfoil
+            foil = Airfoil.naca00xx(
+                t_rel=t_rel,
+                c=c,
+                normalize=normalize
+            )
 
-    for f in files:
-        filepath = os.path.join(perfiles_dir, f)
+            # Formato del espesor (ej: 0.12 -> "12")
+            thickness_str = f"{int(t_rel * 100):02d}"
 
-        print(f"\n---- {f} ----\n")
+            # Crear nombre clave y nombre archivo
+            if normalize:
+                key = f"NACA00{thickness_str}_c{c:.1f}m_nd"
+                filename = f"NACA00{thickness_str}_c{c:.1f}m_nd.dat"
+            else:
+                key = f"NACA00{thickness_str}_c{c:.1f}m"
+                filename = f"NACA00{thickness_str}_c{c:.1f}m.dat"
 
-        for alpha in alphas:
-            result = run_xfoil(filepath, alpha=alpha, Re=Re, Mach=Mach)
+            filepath = os.path.join(output_folder, filename)
 
-            if result is None:
-                print(f"[WARN] No converge para α={alpha}°")
-                continue
+            # Guardar archivo .dat
+            foil.save_dat(filepath, non_dim=normalize)
 
-            CL, CD, CM = result
-            print(f"α = {alpha:>4}°  →  CL={CL:.4f},  CD={CD:.5f},  CM={CM:.4f}")
+            # Guardar perfil en el diccionario
+            airfoil_dict[key] = foil
 
-            summary.append((f, alpha, CL, CD, CM))
+            print(f"[OK] Generado: {filepath}")
 
-    # Convertimos summary en array para análisis adicional si quieres
-    summary = np.array(summary, dtype=object)
+    return airfoil_dict
 
-    # Mostrar resumen ordenado por CD global
-    print("\n\n=== RESUMEN ORDENADO POR CD ===")
-    ordenado = sorted(summary, key=lambda x: x[3])
 
-    for entry in ordenado:
-        f, alpha, CL, CD, CM = entry
-        print(f"{f:25s}  α={alpha:>4}°  CD={CD:.5f}  CL={CL:.4f}  CM={CM:.4f}")
 
 if __name__ == "__main__":
-    main()
+
+    espesores = [0.06, 0.08, 0.12, 0.14, 0.16, 0.18, 0.20]  # NACA0006, 08, 12...
+    cuerdas   = [1.5, 3.0, 4.5]
+
+    generate_airfoils(espesores, cuerdas, normalize=False)
