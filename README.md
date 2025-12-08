@@ -1,198 +1,130 @@
 # 🚀 Instalación del Entorno CFD — WSL + Miniconda + SU2 + su2env
 
-Esta guía explica cómo instalar WSL, Ubuntu, Miniconda, el entorno `su2env`, SU2 v8.3.0 y las librerías necesarias para generar mallas con Gmsh y ejecutar simulaciones automáticas desde Python.
+Guía completa para instalar WSL2, Ubuntu, Miniconda, el entorno `su2env`, paquetes de generación de mallas (Gmsh/meshio/pygmsh) y SU2 v8.3.0 compilado desde fuente con soporte MPI.
+Funciona en Windows 10/11.
 
-Funciona en **Windows 10/11**.
+------------------------------------------------------------
+🟥 Fase 1 — Instalar WSL en Windows
+------------------------------------------------------------
 
----
+Ejecuta en PowerShell como Administrador:
 
-## 🟥 Fase 1 — Instalación de WSL en Windows
-
-Abrir **PowerShell como Administrador** y ejecutar:
-
-```powershell
-wsl --install
-```
+    wsl --install
 
 Esto instalará:
+- WSL2
+- Ubuntu por defecto
 
-- WSL2  
-- Ubuntu por defecto  
+Reinicia el PC cuando termine.
 
-🔄 **Reinicia el PC cuando termine**.
+------------------------------------------------------------
+🟧 Fase 2 — Configuración dentro de Ubuntu (WSL)
+------------------------------------------------------------
 
----
+1. Actualizar sistema:
 
-## 🟧 Fase 2 — Instalación dentro de Ubuntu (WSL)
+    sudo apt update && sudo apt upgrade -y
 
-Cuando reinicies, abre **Ubuntu** desde el menú inicio.
+2. Instalar dependencias esenciales:
 
----
+    sudo apt install -y \
+        build-essential \
+        git \
+        python3 python3-pip python3.12-venv \
+        ninja-build \
+        mpich libmpich-dev \
+        gfortran wget
 
-### 1. Actualizar sistema
+3. Instalar Miniconda:
 
-```bash
-sudo apt update && sudo apt upgrade -y
-```
-
----
-
-### 2. Instalar dependencias esenciales
-
-```bash
-sudo apt install -y build-essential cmake git wget gfortran python3-dev \
-                    libopenmpi-dev openmpi-bin
-```
-
----
-
-### 3. Instalar Miniconda
-
-Descargar:
-
-```bash
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-```
-
-Instalar:
-
-```bash
-bash miniconda.sh -b -p $HOME/miniconda3
-```
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p $HOME/miniconda3
 
 Inicializar conda:
 
-```bash
-eval "$($HOME/miniconda3/bin/conda shell.bash hook)"
-conda init bash
-```
+    eval "$($HOME/miniconda3/bin/conda shell.bash hook)"
+    conda init bash
 
-🔄 **Cierra y vuelve a abrir Ubuntu**.
+Cierra y vuelve a abrir Ubuntu.
 
----
+4. Crear entorno su2env:
 
-### 4. Crear el entorno su2env
-
-```bash
-conda create -n su2env python=3.10 -y
-```
+    conda create -n su2env python=3.10 -y
 
 Activarlo:
 
-```bash
-conda activate su2env
-```
+    conda activate su2env
 
----
+5. Instalar librerías Python:
 
-### 5. Instalar librerías de Python
+    pip install numpy scipy matplotlib pygmsh meshio gmsh
 
-```bash
-pip install numpy scipy matplotlib pygmsh meshio gmsh
-```
+------------------------------------------------------------
+🟦 Fase 3 — Instalar SU2 v8.3.0 (compilación oficial)
+------------------------------------------------------------
 
----
+6. Clonar SU2:
 
-### 6. Instalar SU2 v8.3.0 (binarios precompilados)
+    cd ~
+    git clone https://github.com/su2code/SU2.git
+    cd SU2
+    git checkout v8.3.0
 
-Descargar:
+7. Configurar compilación con Meson:
 
-```bash
-wget https://github.com/su2code/SU2/releases/download/v8.3.0/SU2_v8.3.0_linux.tar.gz
-```
+    ./meson.py setup build --prefix=$HOME/SU2 -Dwith-mpi=enabled
 
-Descomprimir:
+8. Compilar e instalar:
 
-```bash
-tar -xvzf SU2_v8.3.0_linux.tar.gz
-```
+    ninja -C build install
 
-Mover a /usr/local:
+9. Añadir SU2 al PATH:
 
-```bash
-sudo mv SU2_v8.3.0_linux /usr/local/SU2
-```
+    echo 'export PATH=$HOME/SU2/bin:$PATH' >> ~/.bashrc
+    source ~/.bashrc
 
-Añadir SU2 al PATH permanentemente:
+------------------------------------------------------------
+🟩 Verificación
+------------------------------------------------------------
 
-```bash
-echo 'export PATH=/usr/local/SU2/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-```
+1. Probar SU2:
 
----
+    SU2_CFD -h
 
-## 🟩 Verificación
+Debe aparecer:
+"SU2 v8.3.0 Harrier"
 
-### Probar SU2:
+2. Probar MPI:
 
-```bash
-SU2_CFD --version
-```
+    mpirun -np 2 SU2_CFD -h
 
-Debe mostrar el banner de **SU2 v8.3.0 Harrier**.
+3. Verificar librerías Python:
 
----
+    python3 - << 'EOF'
+    import gmsh, meshio, numpy
+    print("OK: gmsh + meshio + numpy funcionando correctamente.")
+    EOF
 
-### Probar librerías de Python
+------------------------------------------------------------
+🟦 Acceder a Windows desde WSL
+------------------------------------------------------------
 
-```bash
-python3 - << 'EOF'
-import gmsh, meshio, numpy
-print("OK: gmsh + meshio + numpy funcionando correctamente.")
-EOF
-```
+Ruta de Windows:
 
----
+    C:\Users\Usuario\Documents
 
-## 🟦 Acceder a archivos de Windows desde WSL
+En WSL se accede como:
 
-Rutas Windows como:
-
-```
-C:\Users\tu_usuario\Documents\Proyecto
-```
-
-se acceden así:
-
-```
-/mnt/c/Users/tu_usuario/Documents/Proyecto
-```
+    /mnt/c/Users/Usuario/Documents
 
 Ejemplo:
 
-```bash
-cd /mnt/c/Users/Manolito/Documents/3ro/Aerodinamica/DragHunter
-```
+    cd /mnt/c/Users/Manolito/Documents/3ro/Aerodinamica/DragHunter
 
----
+------------------------------------------------------------
+🟪 Activar entorno cada vez que entres en Ubuntu
+------------------------------------------------------------
 
-## 🟪 Activar el entorno cada vez que abras Ubuntu
+    conda activate su2env
 
-```bash
-conda activate su2env
-```
-
----
-
-## 🟦 Resumen de instalación
-
-| Componente | Estado |
-|-----------|--------|
-| WSL2 + Ubuntu | ✔ |
-| Miniconda | ✔ |
-| Entorno `su2env` | ✔ |
-| Python 3.10 | ✔ |
-| Gmsh | ✔ |
-| MeshIO | ✔ |
-| pygmsh | ✔ |
-| SU2 v8.3.0 | ✔ |
-
----
-
-## 🟩 ¿Problemas?
-
-Puedes abrir un issue en el repositorio o contactar con el desarrollador.
-
----
 
