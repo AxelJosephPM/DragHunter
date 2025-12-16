@@ -44,9 +44,9 @@ else {
 # Paquetes Python principales
 Write-Host "`n[CHECK] Paquetes Python en el venv:"
 if (Test-Path $venvPython) {
-    $pyCheck = @"
+$pyCheck = @"
 import importlib, sys
-pkgs = ["numpy", "matplotlib", "aerosandbox", "PySide6"]
+pkgs = ["numpy", "matplotlib", "pandas", "gmsh", "aerosandbox", "PySide6"]
 missing = []
 for p in pkgs:
     try:

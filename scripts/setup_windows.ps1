@@ -57,7 +57,7 @@ foreach ($rel in $reqCandidates) {
 }
 
 if (-not $installedReq) {
-    $basePkgs = @("numpy", "matplotlib", "pyside6", "aerosandbox")
+    $basePkgs = @("numpy", "matplotlib", "pandas", "gmsh", "pyside6", "aerosandbox")
     Write-Host "[PY] No se encontró requirements.txt; instalando base: $($basePkgs -join ', ')"
     & $venvPython -m pip install $basePkgs
 }

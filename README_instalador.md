@@ -15,7 +15,7 @@ Este repo incluye scripts para automatizar lo máximo posible la instalación. S
    .\scripts\setup_windows.ps1 -EnableWSL
    ```
    - El flag `-EnableWSL` habilita WSL/VMPlatform y lanza `wsl --install -d Ubuntu` si no está instalado (puede pedir reinicio). Si ya tienes WSL, puedes omitir el flag.
-   - El script crea `.venv` y instala dependencias (usa requirements.txt si existe; si no, instala numpy/matplotlib/PySide6/aerosandbox).
+   - El script crea `.venv` y instala dependencias (usa `requirements.txt` que incluye numpy, matplotlib, pandas, gmsh, PySide6, aerosandbox).
    - Si tienes Gmsh instalado en otra ruta, añade `-GmshPath "C:\ruta\a\gmsh.exe"` para registrar `GMSH_CMD`.
 
 ## 2) Preparar WSL (Ubuntu) y SU2
