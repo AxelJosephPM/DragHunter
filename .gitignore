@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # XFOIL artefacts
 xfoil_script.inp
@@ -15,6 +16,23 @@ polar_test.txt
 # Generated data
 generated_profiles/
 results/
+generated_profiles_test/
+meshes/
+results_su2/
+aerosandbox_results/
+analysis_*/
+report_plots/
+*.su2
+*.dat
+*.msh
+*.geo
+*.log
+*.xlsx
+config_tmp.cfg
+history.csv
+solution*
+temp.*
+.vscode/
 
 # Misc
 .DS_Store

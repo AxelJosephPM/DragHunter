@@ -1,0 +1,77 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\geometry{margin=2.4cm}
+
+\title{Caracterizaci\'on Aerodin\'amica del Rotodomo (CFD)}
+\author{Informe t\'ecnico}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Resumen Ejecutivo}
+Se documenta la caracterizaci\'on aerodin\'amica de un rotodomo mediante resultados CFD contenidos en \texttt{airfoil\_rankings.xlsx} (hoja \texttt{DATASET}). El an\'alisis cubre:
+\begin{itemize}
+    \item Divergencia de resistencia con el n\'umero de Mach.
+    \item Curva de sustentaci\'on y polar $C_l$--$C_d$ en el rango de \'angulo de ataque.
+    \item Sensibilidad a altitud/Reynolds.
+    \item C\'alculo de carga de resistencia absoluta sobre el \'area de referencia.
+    \item Modelos de interpolaci\'on para estimar coeficientes en el envolvente de vuelo.
+\end{itemize}
+Las figuras se generan con \texttt{cfd\_report.py} y se ubican en \texttt{report\_plots/}.
+
+\section{Datos y Preproceso}
+El dataset proporciona: Mach, \'angulo de ataque (AoA), Reynolds/altitud, $C_l$, $C_d$, $C_m$, densidad $\rho$ y condiciones termodin\'amicas. Se estandarizaron cabeceras, se convirtieron columnas a num\'erico y se descartaron filas incompletas.
+
+\section{Resultados Gr\'aficos}
+Resultados clave (sin figuras embebidas):
+\begin{itemize}
+    \item Divergencia de drag: $C_d$ casi plano de Mach 0.23--0.45; incremento abrupto a Mach 0.7 por ondas de choque.
+    \item Curva $C_l$--AoA: zona lineal inicial y separaci\'on a AoA altos (10--15º), con aumento de $C_d$ en p\'erdida (polar $C_l$--$C_d$).
+    \item Altitud/Reynolds: $C_d$ cuasi-constante sugiere independencia de Re; variaciones indicar\'ian sensibilidad de capa l\'imite.
+    \item Drag absoluto: $D = \tfrac{1}{2}\rho V^2 S_\text{ref} C_d$; a baja altitud domina la densidad, a gran altitud la velocidad real puede sostener cargas.
+\end{itemize}
+
+\subsection{Espacio de estados para interpolaci\'on}
+El espacio de entrada para la estimaci\'on de coeficientes se define por $(\alpha, \mathrm{Mach}, Re)$. Las consultas deben permanecer dentro del convex hull de los datos muestreados para evitar extrapolaciones no f\'isicas. Si se requiere visualizaci\'on 3D, generar un scatter o superficies por cortes de $Re$ con los puntos CFD y la superficie interpolada.
+
+\section{Interpolaci\'on}
+\subsection{Polinomio $C_l(\alpha)$}
+Se ajust\'o un polinomio de grado 3 con todos los datos de $C_l$ vs AoA. Coeficientes en \texttt{report\_plots/cl\_poly\_coeffs.txt}. Uso en Python:
+\begin{verbatim}
+import numpy as np
+poly = np.poly1d([c3, c2, c1, c0])  # coeficientes del archivo
+cl_est = poly(aoa_deg)
+\end{verbatim}
+
+\subsection{Interpolaci\'on Multivariante (AoA, Mach, Re) $\rightarrow$ $C_l$, $C_d$}
+Para estimar coeficientes dentro del envolvente de datos:
+\begin{verbatim}
+from scipy.interpolate import LinearNDInterpolator
+X = df[['AoA','mach','Re']].to_numpy()
+cl_int = LinearNDInterpolator(X, df['Cl_true'].to_numpy())
+cd_int = LinearNDInterpolator(X, df['Cd_true'].to_numpy())
+cl_est = cl_int(aoa, mach, Re)
+cd_est = cd_int(aoa, mach, Re)
+\end{verbatim}
+Notas:
+\begin{itemize}
+    \item Evitar extrapolar fuera de los rangos simulados (Mach, AoA, Re).
+    \item Alternativa suave: RBF con \texttt{scipy.interpolate.Rbf} y kernel \texttt{linear} o \texttt{multiquadric}.
+\end{itemize}
+
+\section{Conclusiones Operativas}
+\begin{itemize}
+    \item El radomo mantiene $C_d$ estable de Mach 0.23 a 0.45; a Mach 0.7 se observa divergencia de drag (ondas de choque).
+    \item La curva $C_l$--AoA muestra inicio de separaci\'on a altos \'angulos (10--15º), con crecimiento de $C_d$ en p\'erdida.
+    \item La sensibilidad a altitud/Reynolds es moderada; un $C_d$ plano indica flujo poco dependiente de Re en el rango operativo.
+    \item Las cargas absolutas dependen de $\rho$ y de la velocidad real; ajustar $S_\text{ref}$ al \'area del radomo para cuantificar esfuerzos en pilones.
+\end{itemize}
+
+\end{document}
